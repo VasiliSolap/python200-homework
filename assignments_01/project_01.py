@@ -199,8 +199,16 @@ def summary_report(df):
     logger.info(f"Bottom 3 regions:\n{bottom3}")
     
     # Result of pre/post pandemic t-test
-    logger.info("2019 vs 2020: No significant difference found (p=0.5953). "
-                "Pandemic did not significantly affect global happiness in 2020.")
+    group_2019 = df[df["year"] == 2019]["Happiness score"].dropna()
+    group_2020 = df[df["year"] == 2020]["Happiness score"].dropna()
+    t_stat, p_value = stats.ttest_ind(group_2019, group_2020)
+
+    if p_value < 0.05:
+        logger.info(f"2019 vs 2020: Significant difference found (p={p_value:.4f}). "
+                    f"Pandemic significantly affected global happiness.")
+    else:
+        logger.info(f"2019 vs 2020: No significant difference found (p={p_value:.4f}). "
+                    f"Pandemic did not significantly affect global happiness in 2020.")
     
     # Strongest correlation after Bonferroni correction
     logger.info("Strongest correlation with happiness: Social support (r=0.737)")
