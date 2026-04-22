@@ -140,3 +140,8 @@ plt.grid(True, alpha=0.3)
 
 plt.savefig('outputs/predicted_vs_actual.png')
 plt.show()
+
+# If a point falls ABOVE the diagonal, the actual cost 
+# was higher than predicted.
+# If a point falls BELOW the diagonal, the actual cost 
+# was lower than predicted.
