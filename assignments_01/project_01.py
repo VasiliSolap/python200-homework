@@ -8,8 +8,8 @@ from prefect.logging import get_run_logger
 import os
 
 # Directory paths for data and outputs
-DATA_DIR = "assignments_01/resources/happiness_project"
-OUTPUT_DIR = "assignments_01/outputs"
+DATA_DIR = "resources/happiness_project"
+OUTPUT_DIR = "outputs"
 
 # Task 1: Load all 10 yearly CSV files and merge into one DataFrame
 @task(retries=3, retry_delay_seconds=2)
@@ -152,58 +152,50 @@ def hypothesis_testing(df):
 @task
 def correlations(df):
     logger = get_run_logger()
+    results = {}
     
     numeric_cols = [
-        "GDP per capita",
-        "Social support", 
-        "Healthy life expectancy",
-        "Freedom to make life choices",
-        "Generosity",
-        "Perceptions of corruption"
+        "GDP per capita", "Social support", 
+        "Healthy life expectancy", "Freedom to make life choices",
+        "Generosity", "Perceptions of corruption"
     ]
     
-    # Bonferroni correction: divide alpha by number of tests
-    number_of_tests = len(numeric_cols)
-    adjusted_alpha = 0.05 / number_of_tests
-    logger.info(f"Adjusted alpha (Bonferroni): {adjusted_alpha:.4f}")
-    
-    # Compute Pearson correlation for each variable vs happiness score
     for col in numeric_cols:
         clean = df[["Happiness score", col]].dropna()
         corr, p_value = stats.pearsonr(clean["Happiness score"], clean[col])
-        
-        significant = "YES" if p_value < 0.05 else "NO"
-        significant_bonferroni = "YES" if p_value < adjusted_alpha else "NO"
-        
-        logger.info(f"{col}: r={corr:.3f}, p={p_value:.4f}, "
-                   f"significant={significant}, "
-                   f"after Bonferroni={significant_bonferroni}")
+        results[col] = corr  # ← сохраняем результат
+        logger.info(f"{col}: r={corr:.3f}, p={p_value:.4f}")
     
-    return df
+    return df, results 
+
+@task
+def summary_report(df, corr_results): 
+    logger = get_run_logger()
+    
+    # Strongest correlation — находим программно!
+    strongest = max(corr_results, key=lambda x: abs(corr_results[x]))
+    logger.info(f"Strongest correlation: {strongest} (r={corr_results[strongest]:.3f})")
 
 # Task 6: Log a human-readable summary of all key findings
 @task
-def summary_report(df):
+def summary_report(df, corr_results):
     logger = get_run_logger()
     
-    # Total number of countries and years in the dataset
     total_countries = df["Country"].nunique()
     total_years = df["year"].nunique()
     logger.info(f"Total countries: {total_countries}, Total years: {total_years}")
     
-    # Top 3 and bottom 3 regions by mean happiness score
     by_region = df.groupby("Regional indicator")["Happiness score"].mean().sort_values(ascending=False)
     top3 = by_region.head(3)
     bottom3 = by_region.tail(3)
     logger.info(f"Top 3 regions:\n{top3}")
     logger.info(f"Bottom 3 regions:\n{bottom3}")
     
-    # Result of pre/post pandemic t-test
-    logger.info("2019 vs 2020: No significant difference found (p=0.5953). "
-                "Pandemic did not significantly affect global happiness in 2020.")
+    logger.info("2019 vs 2020: No significant difference found (p=0.5953).")
     
-    # Strongest correlation after Bonferroni correction
-    logger.info("Strongest correlation with happiness: Social support (r=0.737)")
+    # Strongest correlation
+    strongest = max(corr_results, key=lambda x: abs(corr_results[x]))
+    logger.info(f"Strongest correlation: {strongest} (r={corr_results[strongest]:.3f})")
     
     return df
 
@@ -214,8 +206,8 @@ def happiness_pipeline():
     descriptive_stats(merged)
     visualizations(merged)
     hypothesis_testing(merged)
-    correlations(merged)
-    summary_report(merged)
+    df, corr_results = correlations(merged)  
+    summary_report(merged, corr_results)     
 
 if __name__ == "__main__":
     happiness_pipeline()
