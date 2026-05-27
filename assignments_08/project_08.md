@@ -26,7 +26,7 @@ Scenario B at $2,975/month — even more than the GPU VM itself.
 
 ## Script Output
 === Monthly Cost Estimates ===
-Scenario A (lightweight):       $1.60
+Scenario A (lightweight):       $2.24
 Scenario B (GPU VM only):       $2233.80
 Scenario B VM costs 1396.1x more than Scenario A
 
