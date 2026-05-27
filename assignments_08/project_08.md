@@ -1,7 +1,7 @@
 # Project 08 - Cost Analysis
 
 ## Video
-[link here]
+https://youtu.be/2OJ_Gpo2slg
 
 ## Cost Analysis Summary
 
