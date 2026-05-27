@@ -8,8 +8,8 @@
 ### Scenario A - Lightweight Compute
 - VM: Standard_B1s (1 vCPU, 1 GB RAM)
 - Hours: 160/month (8h/day, 5 days/week)
-- Monthly cost: $1.60
-- Hourly rate: $0.010/hour
+- Monthly cost: $2.24
+- Hourly rate: $0.014/hour
 
 ### Scenario B - Heavy Analytics Workload
 - VM: Standard_NC6s_v3 (6 vCPU, 1 V100 GPU) — $2,233.80/month
