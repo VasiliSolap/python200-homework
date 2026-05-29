@@ -146,7 +146,7 @@ ax2.set_title("Right")
 plt.tight_layout()
 plt.savefig("assignments_01/outputs/subplots.png")
 plt.close()
-print("Matplotlib Q1 saved") 
+print("Matplotlib Q4 saved") 
 
 # Descriptive Stats Q1
 data = [12, 15, 14, 10, 18, 22, 13, 16, 14, 15]

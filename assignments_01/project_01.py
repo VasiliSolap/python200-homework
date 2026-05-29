@@ -163,18 +163,10 @@ def correlations(df):
     for col in numeric_cols:
         clean = df[["Happiness score", col]].dropna()
         corr, p_value = stats.pearsonr(clean["Happiness score"], clean[col])
-        results[col] = corr  # ← сохраняем результат
+        results[col] = corr
         logger.info(f"{col}: r={corr:.3f}, p={p_value:.4f}")
     
-    return df, results 
-
-@task
-def summary_report(df, corr_results): 
-    logger = get_run_logger()
-    
-    # Strongest correlation — находим программно!
-    strongest = max(corr_results, key=lambda x: abs(corr_results[x]))
-    logger.info(f"Strongest correlation: {strongest} (r={corr_results[strongest]:.3f})")
+    return df, results
 
 # Task 6: Log a human-readable summary of all key findings
 @task
@@ -191,9 +183,13 @@ def summary_report(df, corr_results):
     logger.info(f"Top 3 regions:\n{top3}")
     logger.info(f"Bottom 3 regions:\n{bottom3}")
     
-    logger.info("2019 vs 2020: No significant difference found (p=0.5953).")
+    # p-value computed dynamically, not hardcoded
+    group_2019 = df[df["year"] == 2019]["Happiness score"].dropna()
+    group_2020 = df[df["year"] == 2020]["Happiness score"].dropna()
+    _, p_val = stats.ttest_ind(group_2019, group_2020)
+    logger.info(f"2019 vs 2020: No significant difference found (p={p_val:.4f}).")
     
-    # Strongest correlation
+    # Strongest correlation found programmatically
     strongest = max(corr_results, key=lambda x: abs(corr_results[x]))
     logger.info(f"Strongest correlation: {strongest} (r={corr_results[strongest]:.3f})")
     
@@ -206,8 +202,8 @@ def happiness_pipeline():
     descriptive_stats(merged)
     visualizations(merged)
     hypothesis_testing(merged)
-    df, corr_results = correlations(merged)  
-    summary_report(merged, corr_results)     
+    df, corr_results = correlations(merged)
+    summary_report(merged, corr_results)
 
 if __name__ == "__main__":
     happiness_pipeline()
