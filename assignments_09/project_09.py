@@ -1,5 +1,5 @@
 # project_09.py
-# Video link: 
+# Video link: https://youtu.be/tko0rW3EdMI
 
 import json
 import requests
@@ -31,7 +31,6 @@ def load(blob_bytes):
     blob_path = f"raw/{date.today().isoformat()}/weather.json"
     blob_client = container_client.get_blob_client(blob_path)
     blob_client.upload_blob(blob_bytes, overwrite=True)
-    
     print(f"Uploaded {len(blob_bytes)} bytes to {blob_path}")
     return container_client
 
