@@ -49,10 +49,14 @@ print(y.value_counts())
 # the model could achieve high accuracy by always predicting the majority class (ham),
 # while completely ignoring the minority class (spam).
 
-features_to_plot = [48, 51, 56]
+feature_to_plot = [
+    feature_names.index('word_freq_free'),
+    feature_names.index('char_freq_!'),
+    feature_names.index('capital_run_length_total')
+]
 names = ['word_freq_free', 'char_freq_!', 'capital_run_length_total']
 
-for idx, name in zip(features_to_plot, names):
+for idx, name in zip(feature_to_plot, names):
     plt.figure(figsize=(8, 6))
     sns.boxplot(x=y, y=df[idx])
     plt.title(f'Distribution of {name} (0=Ham, 1=Spam)')

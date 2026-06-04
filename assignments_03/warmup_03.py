@@ -140,7 +140,7 @@ for c in c_values:
     )
     model.fit(X_train_scaled, y_train)
     
-    coef_magnitude = np.abs(model.estimators_[0].coef_).sum()
+    coef_magnitude = np.abs(np.array([est.coef_ for est in model.estimators_])).sum()
     
     print("\nLogistic Regression Q1")
     print(f"C = {c:4}: Total coefficient magnitude = {coef_magnitude:.4f}")
