@@ -41,7 +41,6 @@ def load_data():
 def descriptive_stats(df):
     logger = get_run_logger()
     
-    # Overall statistics for happiness score
     mean = df["Happiness score"].mean()
     median = df["Happiness score"].median()
     std = df["Happiness score"].std()
@@ -50,11 +49,9 @@ def descriptive_stats(df):
     logger.info(f"Median happiness: {median}")
     logger.info(f"STD happiness: {std}")
 
-    # Mean happiness score grouped by year
     by_year = df.groupby("year")["Happiness score"].mean()
     logger.info(f"By year:\n{by_year}")
 
-    # Mean happiness score grouped by region
     by_region = df.groupby("Regional indicator")["Happiness score"].mean()
     logger.info(f"By region:\n{by_region}")
     
@@ -65,7 +62,6 @@ def descriptive_stats(df):
 def visualizations(df):
     logger = get_run_logger()
 
-    # Histogram of all happiness scores across all years
     plt.hist(df["Happiness score"].dropna(), bins=20)
     plt.title("Happiness Score Distribution")
     plt.xlabel("Happiness Score")
@@ -74,7 +70,6 @@ def visualizations(df):
     plt.close()
     logger.info("Saved happiness_histogram.png")
 
-    # Boxplot comparing happiness score distributions across years
     data_by_year = [df[df["year"] == year]["Happiness score"].dropna().values 
                 for year in sorted(df["year"].unique())]
     years = sorted(df["year"].unique())
@@ -86,7 +81,6 @@ def visualizations(df):
     plt.close()
     logger.info("Saved happiness_by_year.png")
 
-    # Scatter plot: GDP per capita vs happiness score
     plt.scatter(df["GDP per capita"], df["Happiness score"], alpha=0.5)
     plt.title("GDP vs Happiness Score")
     plt.xlabel("GDP per capita")
@@ -95,7 +89,6 @@ def visualizations(df):
     plt.close()
     logger.info("Saved gdp_vs_happiness.png")
 
-    # Correlation heatmap of all numeric columns
     numeric_cols = ["Happiness score", "GDP per capita", "Social support",
                     "Healthy life expectancy", "Freedom to make life choices",
                     "Generosity", "Perceptions of corruption"]
@@ -146,52 +139,78 @@ def hypothesis_testing(df):
     else:
         logger.info("Result: No significant difference found")
     
-    return df
+    return df, p_value
 
 # Task 5: Compute Pearson correlations with Bonferroni correction
 @task
 def correlations(df):
     logger = get_run_logger()
-    results = {}
     
     numeric_cols = [
-        "GDP per capita", "Social support", 
-        "Healthy life expectancy", "Freedom to make life choices",
-        "Generosity", "Perceptions of corruption"
+        "GDP per capita",
+        "Social support", 
+        "Healthy life expectancy",
+        "Freedom to make life choices",
+        "Generosity",
+        "Perceptions of corruption"
     ]
     
+    # Bonferroni correction: divide alpha by number of tests
+    number_of_tests = len(numeric_cols)
+    adjusted_alpha = 0.05 / number_of_tests
+    logger.info(f"Adjusted alpha (Bonferroni): {adjusted_alpha:.4f}")
+    
+    # Compute Pearson correlation for each variable vs happiness score
+    results = {}
     for col in numeric_cols:
         clean = df[["Happiness score", col]].dropna()
         corr, p_value = stats.pearsonr(clean["Happiness score"], clean[col])
-        results[col] = corr
-        logger.info(f"{col}: r={corr:.3f}, p={p_value:.4f}")
-    
-    return df, results
+        results[col] = {"corr": corr, "p_value": p_value}
+
+        significant = "YES" if p_value < 0.05 else "NO"
+        significant_bonferroni = "YES" if p_value < adjusted_alpha else "NO"
+
+        logger.info(f"{col}: r={corr:.3f}, p={p_value:.4f}, "
+                   f"significant={significant}, "
+                   f"after Bonferroni={significant_bonferroni}")
+
+    # Find strongest correlation that passes Bonferroni correction
+    strongest = max(
+        results,
+        key=lambda col: abs(results[col]["corr"])
+        if results[col]["p_value"] < adjusted_alpha
+        else 0
+    )
+
+    return df, strongest
 
 # Task 6: Log a human-readable summary of all key findings
 @task
-def summary_report(df, corr_results):
+def summary_report(df, strongest, p_value_pandemic):
     logger = get_run_logger()
     
+    # Total number of countries and years in the dataset
     total_countries = df["Country"].nunique()
     total_years = df["year"].nunique()
     logger.info(f"Total countries: {total_countries}, Total years: {total_years}")
     
+    # Top 3 and bottom 3 regions by mean happiness score
     by_region = df.groupby("Regional indicator")["Happiness score"].mean().sort_values(ascending=False)
     top3 = by_region.head(3)
     bottom3 = by_region.tail(3)
     logger.info(f"Top 3 regions:\n{top3}")
     logger.info(f"Bottom 3 regions:\n{bottom3}")
     
-    # p-value computed dynamically, not hardcoded
-    group_2019 = df[df["year"] == 2019]["Happiness score"].dropna()
-    group_2020 = df[df["year"] == 2020]["Happiness score"].dropna()
-    _, p_val = stats.ttest_ind(group_2019, group_2020)
-    logger.info(f"2019 vs 2020: No significant difference found (p={p_val:.4f}).")
+    # Result of pre/post pandemic t-test
+    if p_value_pandemic < 0.05:
+        logger.info(f"2019 vs 2020: Significant difference found (p={p_value_pandemic:.4f}). "
+                    "Pandemic likely affected global happiness in 2020.")
+    else:
+        logger.info(f"2019 vs 2020: No significant difference found (p={p_value_pandemic:.4f}). "
+                    "Pandemic did not significantly affect global happiness in 2020.")
     
-    # Strongest correlation found programmatically
-    strongest = max(corr_results, key=lambda x: abs(corr_results[x]))
-    logger.info(f"Strongest correlation: {strongest} (r={corr_results[strongest]:.3f})")
+    # Strongest correlation after Bonferroni correction
+    logger.info(f"Strongest correlation after Bonferroni correction: {strongest}")
     
     return df
 
@@ -201,9 +220,9 @@ def happiness_pipeline():
     merged = load_data()
     descriptive_stats(merged)
     visualizations(merged)
-    hypothesis_testing(merged)
-    df, corr_results = correlations(merged)
-    summary_report(merged, corr_results)
+    df, p_value_pandemic = hypothesis_testing(merged)
+    df, strongest = correlations(merged)
+    summary_report(df, strongest, p_value_pandemic)
 
 if __name__ == "__main__":
     happiness_pipeline()
