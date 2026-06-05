@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.multiclass import OneVsRestClassifier
 
 from sklearn.datasets import load_iris, load_digits
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -22,8 +23,9 @@ y = iris.target
 # --- Preprocessing ---
 
 #Preprocessing Q1
-X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.2, random_state=42, stratify=y)
 
+print("\n Preprocessing Q1")
 print(f"X_train Shape: {X_train.shape}")
 print(f"X_test Shape: {X_test.shape}")
 print(f"y_train Shape: {y_train.shape}")
@@ -33,6 +35,8 @@ print(f"y_test Shape: {y_test.shape}")
 scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
+
+print("\n Preprocessing Q2")
 print("Means of columns in X_train_scaled:")
 print(X_train_scaled.mean(axis=0))
 
@@ -45,17 +49,19 @@ print(X_train_scaled.mean(axis=0))
 #KNN Q1
 knn = KNeighborsClassifier(n_neighbors=5)
 knn.fit(X_train, y_train)
-preds = knn.predict(X_test)
+preds_unscaled = knn.predict(X_test)
 
-print("Accuracy:", accuracy_score(y_test, preds))
-print(classification_report(y_test, preds))
+print("\n KNN Q1")
+print("Accuracy:", accuracy_score(y_test, preds_unscaled))
+print(classification_report(y_test, preds_unscaled))
 
 #KNN Q2
 knn = KNeighborsClassifier(n_neighbors=5)
 knn.fit(X_train_scaled, y_train)
-preds = knn.predict(X_test_scaled)
+preds_scaled = knn.predict(X_test_scaled)
 
-print("Accuracy (scaled data):", accuracy_score(y_test, preds))
+print("\n KNN Q2")
+print("Accuracy (scaled data):", accuracy_score(y_test, preds_scaled))
 
 # Scaling doesn't change performance here because Iris features are already in 
 # the same units (cm), have similar ranges, and provide clear natural separation.
@@ -64,6 +70,8 @@ print("Accuracy (scaled data):", accuracy_score(y_test, preds))
 knn = KNeighborsClassifier(n_neighbors=5)
 
 cv_scores = cross_val_score(knn, X_train, y_train, cv=5)
+
+print("\n KNN Q3")
 print("Scores for each fold:", cv_scores)
 print(f"Mean Accuracy: {cv_scores.mean():.3f}")
 print(f"Standard Deviation: {cv_scores.std():.3f}")
@@ -75,9 +83,11 @@ print(f"Standard Deviation: {cv_scores.std():.3f}")
 #KNN Q4
 k_values = [1, 3, 5, 7, 9, 11, 13, 15]
 
+print("\n KNN Q4")
 for k in k_values:
     knn = KNeighborsClassifier(n_neighbors=k)
     scores = cross_val_score(knn, X_train, y_train, cv=5)
+
     print(f"k={k:2d}: mean accuracy = {scores.mean():.3f}")
 
 # I would choose the k that yields the highest mean CV score, as it represents 
@@ -88,7 +98,7 @@ for k in k_values:
 # --- Classifier Evaluation ---
 
 #Classifier Evaluation Q1
-cm = confusion_matrix(y_test, preds)
+cm = confusion_matrix(y_test, preds_unscaled)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm,
                               display_labels=iris.target_names)
 disp.plot(cmap=plt.cm.Blues)
@@ -125,11 +135,14 @@ print("\nClassification Report:\n", classification_report(y_test, dt_preds))
 c_values = [0.01, 1.0, 100]
 
 for c in c_values:
-    model = LogisticRegression(C=c, max_iter=1000)
+    model = OneVsRestClassifier(
+        LogisticRegression(C=c, max_iter=1000, solver='liblinear')
+    )
     model.fit(X_train_scaled, y_train)
     
-    coef_magnitude = np.abs(model.coef_).sum()
+    coef_magnitude = np.abs(np.array([est.coef_ for est in model.estimators_])).sum()
     
+    print("\nLogistic Regression Q1")
     print(f"C = {c:4}: Total coefficient magnitude = {coef_magnitude:.4f}")
 
 # Comment on the results:
