@@ -6,6 +6,9 @@ import seaborn as sns
 
 
 # --- Task 1: Load and Explore ---
+
+# Opened the file in a text editor and noticed that fields are separated by ";",
+# so sep=";" parameter is required in pd.read_csv()
 df = pd.read_csv('resources/student_performance_math.csv', sep=";")
 print((f"Dataset shape: {df.shape}"))
 print(df.head(5))
@@ -136,6 +139,11 @@ for name, coef in zip(feature_cols, model_full.coef_):
 # These show strong coefficients and have a clear logical link to academic success.
 #   DROP: 'activities' and 'freetime'. Their coefficients are near zero (-0.009 and -0.042),
 #meaning they don't help the model. Removing them simplifies data collection.
+# Train R² (0.17) and Test R² (0.15) are very close,
+# which means the model is not overfitting — it generalizes
+# consistently to unseen data. However, both values are low,
+# suggesting the model captures only 15% of the variance and
+# struggles to make accurate predictions.
 
 # --- Task 6: Evaluate and Summarize ---
 plt.figure(figsize=(10, 6))
@@ -152,9 +160,19 @@ plt.grid(True, alpha=0.3)
 plt.savefig('outputs/predicted_vs_actual.png')
 plt.show()
 
+# The model struggles more at the HIGH end of grades.
+# High-achieving students (actual 17-19) are consistently
+# UNDERESTIMATED — the model predicts around 12-13 for them.
+#
+# A point ABOVE the diagonal means the actual grade was
+# HIGHER than predicted — model underestimated the student.
+#
+# A point BELOW the diagonal means the actual grade was
+# LOWER than predicted — model overestimated the student.
+
 # 1. Dataset: 357 students (filtered), test set size is 72.
 # 2. Performance: R2 0.15, RMSE 2.86. On a 0-20 scale, the model 
-#    typically misses the true grade by about 3 points.
+#    typically misses the true grade by about 3 points  which is significant on a 0-20 scale.
 # 3. Top Drivers: 'internet' (+0.83) and 'higher' (+0.61) are the strongest 
 #    positive factors. 'schoolsup' (-2.06) and 'failures' (-1.15) are the 
 #    strongest negative predictors.
@@ -173,7 +191,7 @@ X_train_g1, X_test_g1, y_train_g1, y_test_g1 = train_test_split(
 model_g1 = LinearRegression()
 model_g1.fit(X_train_g1, y_train_g1)
 test_r2_g1 = model_g1.score(X_test_g1, y_test_g1)
-
+print("\n The Power of G1")
 print(f"\nModel with G1 - Test R2: {test_r2_g1:.4f}")
 
 # 1. Causality vs Correlation:
