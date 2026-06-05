@@ -146,7 +146,7 @@ ax2.set_title("Right")
 plt.tight_layout()
 plt.savefig("assignments_01/outputs/subplots.png")
 plt.close()
-print("Matplotlib Q1 saved") 
+print("Matplotlib Q4 saved") 
 
 # Descriptive Stats Q1
 data = [12, 15, 14, 10, 18, 22, 13, 16, 14, 15]
@@ -180,6 +180,12 @@ print("Boxplot saved")
 # Descriptive Stats Q4
 normal_data = np.random.normal(50, 5, 200)
 skewed_data = np.random.exponential(10, 200)
+
+# The exponential distribution is more skewed than the normal distribution.
+# For the normal distribution, mean and median both work well
+# because the data is symmetric.
+# For the exponential distribution, median is a better measure
+# of central tendency because the mean is pulled by the long tail.
 
 plt.boxplot([normal_data, skewed_data], tick_labels=["Normal", "Exponential"])
 plt.title("Distribution Comparison")
