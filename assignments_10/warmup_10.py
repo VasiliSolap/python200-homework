@@ -43,8 +43,9 @@
 #                  e.g. "https://mycompany.openai.azure.com"
 # api_version    — the Azure OpenAI API version to use,
 #                  e.g. "2024-02-01"
-# api_key        -- the access key for the Azure OpenAI resource,
-#                   issued by Azure (found in the resource's "Keys and Endpoint" section)
+# deployment_name  -- the name of the specific model deployment configured in Azure,
+#                     passed via the `model` parameter in chat.completions.create();
+#                     e.g. "my-gpt4o-deployment" instead of "gpt-4o-mini"
 
 # Q3
 # The model parameter takes a deployment name, not a model name like "gpt-4o-mini".
