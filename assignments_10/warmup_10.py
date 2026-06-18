@@ -43,6 +43,8 @@
 #                  e.g. "https://mycompany.openai.azure.com"
 # api_version    — the Azure OpenAI API version to use,
 #                  e.g. "2024-02-01"
+# api_key        -- the access key for the Azure OpenAI resource,
+#                   issued by Azure (found in the resource's "Keys and Endpoint" section)
 
 # Q3
 # The model parameter takes a deployment name, not a model name like "gpt-4o-mini".
