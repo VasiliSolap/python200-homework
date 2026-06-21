@@ -1,5 +1,11 @@
 
-## Video : https://youtu.be/AtxYrMnPV4s
+# Video : https://youtu.be/AtxYrMnPV4s
+
+# Weather classification is a borderline LLM use case.
+# Temperature and precipitation are numbers — deterministic code could handle this:
+# if temperature > 10 and precipitation < 1: return "good".
+# You would lose flexibility but gain speed, lower cost, and full predictability.
+
 
 import json
 import os
@@ -22,20 +28,25 @@ SYSTEM_PROMPT = (
     "Reply with that one word only -- no punctuation, no explanation."
 )
 
-# Weather classification is a borderline LLM use case.
-# Temperature and precipitation are numbers — deterministic code could handle this:
-# if temperature > 10 and precipitation < 1: return "good".
-# You would lose flexibility but gain speed, lower cost, and full predictability.
-
 
 # --- Step 1: Read ---
 
 credential = DefaultAzureCredential()
 container = ContainerClient(ACCOUNT_URL, CONTAINER, credential=credential)
 
-blob_path = "raw/2026-06-02/weather.json"
-raw = container.download_blob(blob_path).readall()
-data = json.loads(raw.decode("utf-8"))
+today = date.today().isoformat()
+blob_path = f"raw/{today}/weather.json"
+
+try:
+    raw = container.download_blob(blob_path).readall()
+    data = json.loads(raw.decode("utf-8"))
+    print(f"Loaded raw data from Blob Storage: {blob_path}")
+except Exception:
+    fallback_path = "assignments/resources/weather_raw.json"
+    with open(fallback_path) as f:
+        data = json.load(f)
+    print(f"Blob not found -- using fallback: {fallback_path}")
+
 
 hourly = data["hourly"]
 records = []
@@ -76,7 +87,6 @@ for i, record in enumerate(records[:24]):
 
 # --- Step 3: Write ---
 
-today = date.today().isoformat()
 processed_path = f"processed/{today}/weather_classified.json"
 container.upload_blob(
     processed_path,
